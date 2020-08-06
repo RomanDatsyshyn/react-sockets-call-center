@@ -1,14 +1,75 @@
 import React from "react";
+import axios from "axios";
 import "./App.css";
+
 import CallItem from "./CallItem";
+import EmployerItem from "./EmployerItem";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { calls: [] };
+    this.state = { calls: [], Employees: [] };
   }
 
   connection = new WebSocket("wss://ws.binotel.com:9002");
+
+  componentDidMount() {
+    localStorage.clear();
+
+    this.StartEmployeesInterval();
+
+    this.connection.onopen = function () {
+      console.log("Connected");
+    };
+
+    this.connection.onmessage = (evt) => {
+      this.Receiver(evt.data);
+
+      if (
+        evt.data.indexOf(
+          "Connected to Binotel WebSocket. Please, authorise!"
+        ) !== -1
+      ) {
+        this.connection.send(
+          JSON.stringify({
+            task: "authLikeService",
+            key: "6ed549-0ec1b6a",
+            secret: "c39d79-94f9ae-149a17-061172-47470169",
+          })
+        );
+      }
+    };
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.EmpoyeeInterval);
+  }
+
+  StartEmployeesInterval() {
+    this.EmpoyeeInterval = setInterval(() => {
+      axios({
+        method: "post",
+        url:
+          "https://cors-anywhere.herokuapp.com/https://api.binotel.com/api/4.0/settings/list-of-employees.json",
+        data: {
+          key: "152dc0-e1408ae",
+          secret: "3371d9-3d5c3b-d60905-2e8775-7aee9cc9",
+        },
+      }).then((res) => {
+        let arr = [];
+
+        for (var i in res.data.listOfEmployees)
+          arr.push([
+            res.data.listOfEmployees[i].endpointData.internalNumber,
+            res.data.listOfEmployees[i].endpointData.status,
+          ]);
+
+        arr.splice(-1, 1);
+
+        this.setState({ Employees: arr });
+      });
+    }, 10000);
+  }
 
   Receiver = (data) => {
     let json = JSON.parse(data);
@@ -52,7 +113,7 @@ class App extends React.Component {
           if (call.call_id === json.generalCallID) {
             localStorage.removeItem(`${call.call_id}`);
             let arr = this.state.calls;
-            arr.splice(call.id, call.id);
+            arr.splice(arr.indexOf(call), 1);
             this.setState({
               calls: arr,
             });
@@ -65,33 +126,9 @@ class App extends React.Component {
     }
   };
 
-  componentDidMount() {
-    localStorage.clear();
-    this.connection.onopen = function () {
-      console.log("Connected");
-    };
-
-    this.connection.onmessage = (evt) => {
-      this.Receiver(evt.data);
-
-      if (
-        evt.data.indexOf(
-          "Connected to Binotel WebSocket. Please, authorise!"
-        ) !== -1
-      ) {
-        this.connection.send(
-          JSON.stringify({
-            task: "authLikeService",
-            key: "6ed549-0ec1b6a",
-            secret: "c39d79-94f9ae-149a17-061172-47470169",
-          })
-        );
-      }
-    };
-  }
-
   render() {
     let calls;
+    let employees;
 
     if (this.state.calls.length > 0) {
       calls = this.state.calls.map((call) => (
@@ -104,6 +141,14 @@ class App extends React.Component {
         </tr>
       );
     }
+
+    if (this.state.Employees.length > 0) {
+      employees = this.state.Employees.map((emp) => (
+        <EmployerItem key={Math.random()} employer={emp} />
+      ));
+    } else {
+      employees = <h4 className="ml-3">Please, wait for loading...</h4>;
+    }
     return (
       <div>
         <nav className="navbar navbar-light bg-dark">
@@ -112,377 +157,7 @@ class App extends React.Component {
         <div className="container-fluid mt-3 bg-light">
           <div className="row">
             <div className="col-6">
-              <div className="row overflow-auto vh-88">
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-secondary" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-                <div className="col-4">
-                  <div className="alert alert-success" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-
-                <div className="col-4">
-                  <div className="alert alert-danger" role="alert">
-                    Оператор Тетяна
-                    <hr />
-                    +38 (098) 65-19-23 <br />
-                    +38 (050) 77-89-77
-                  </div>
-                </div>
-              </div>
+              <div className="row overflow-auto vh-88">{employees}</div>
             </div>
             <div className="col-6">
               <div className="table-wrapper-scroll-y my-custom-scrollbar">
